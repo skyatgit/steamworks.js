@@ -258,6 +258,11 @@ export declare namespace workshop {
     contentPath?: string
     tags?: Array<string>
     visibility?: UgcItemVisibility
+    /**
+     * Steam API language code for title and description
+     * e.g. "english", "schinese", "tchinese", "japanese"
+     */
+    language?: string
   }
   export interface InstallInfo {
     folder: string
@@ -336,6 +341,7 @@ export declare namespace workshop {
    * @returns an array of subscribed workshop item ids
    */
   export function getSubscribedItems(): Array<bigint>
+  export function deleteItem(itemId: bigint): Promise<void>
   export const enum UGCQueryType {
     RankedByVote = 0,
     RankedByPublicationDate = 1,

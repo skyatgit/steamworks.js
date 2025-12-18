@@ -16,9 +16,9 @@ pub mod callback {
     impl Handle {
         #[napi]
         pub fn disconnect(&mut self) {
-            if let Some(handle) = self.handle.take() {
-                handle.disconnect();
-            }
+            // 新版 steamworks-rs 中 CallbackHandle 通过 Drop trait 自动清理
+            // 只需要将 handle 设为 None 即可触发 drop
+            self.handle.take();
         }
     }
 

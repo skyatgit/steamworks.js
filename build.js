@@ -32,14 +32,29 @@ const targets = {
 const target = targets[process.argv.at(-1)] || Object.values(targets).find(t => t.platform === process.platform && t.arch === process.arch)
 
 const dist = path.join(__dirname, 'dist', target.folder)
-const redist = path.join(__dirname, 'sdk/redistributable_bin', target.folder)
+
+// 优先从 steamworks-rs 中的 SDK 复制，否则从本地 sdk 目录复制
+const steamworksRsSdk = path.join(__dirname, 'steamworks-rs/steamworks-sys/lib/steam/redistributable_bin', target.folder)
+const localSdk = path.join(__dirname, 'sdk/redistributable_bin', target.folder)
+const redist = fs.existsSync(steamworksRsSdk) ? steamworksRsSdk : localSdk
+
+console.log('[build] SDK 路径:', redist)
+
 target.files.forEach(file => {
     const [source, dest] = [path.join(redist, file), path.join(dist, file)]
     try { fs.mkdirSync(path.dirname(dest), { recursive: true }) } catch { }
-    fs.copyFileSync(source, dest)
+    if (fs.existsSync(source)) {
+        fs.copyFileSync(source, dest)
+        console.log('[build] 复制 SDK 文件:', file)
+    } else {
+        console.warn('[build] SDK 文件不存在:', source)
+    }
 })
 
 const relative = path.relative(process.cwd(), dist)
+
+// 过滤掉空参数
+const extraArgs = process.argv.slice(2).filter(arg => arg.trim() !== '')
 const params = [
     'build',
     '--platform',
@@ -47,9 +62,10 @@ const params = [
     '--js', 'false',
     '--dts', '../../client.d.ts',
     relative,
-    process.argv.slice(2).join(' ')
+    ...extraArgs
 ]
 
+// Windows 需要 shell: true 来运行 npm 包的命令
 child_process.spawn('napi', params, { stdio: 'inherit', shell: true })
     .on('exit', err => {
         if (err) {

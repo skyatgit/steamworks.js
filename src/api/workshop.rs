@@ -7,7 +7,7 @@ pub mod workshop {
     use napi::threadsafe_function::ThreadsafeFunction;
     use napi::threadsafe_function::ThreadsafeFunctionCallMode;
     use std::path::Path;
-    use steamworks::{ClientManager, FileType, PublishedFileId, UpdateHandle};
+    use steamworks::{FileType, PublishedFileId, UpdateHandle};
     use tokio::sync::oneshot;
 
     #[napi(object)]
@@ -56,16 +56,24 @@ pub mod workshop {
         pub content_path: Option<String>,
         pub tags: Option<Vec<String>>,
         pub visibility: Option<UgcItemVisibility>,
+        /// Steam API language code for title and description
+        /// e.g. "english", "schinese", "tchinese", "japanese"
+        pub language: Option<String>,
     }
 
     impl UgcUpdate {
         pub fn submit(
             self,
-            mut update: UpdateHandle<ClientManager>,
+            mut update: UpdateHandle,
             callback: impl FnOnce(Result<(PublishedFileId, bool), steamworks::SteamError>)
                 + Send
                 + 'static,
-        ) -> steamworks::UpdateWatchHandle<ClientManager> {
+        ) -> steamworks::UpdateWatchHandle {
+            // Language must be set BEFORE title and description
+            if let Some(language) = self.language {
+                update = update.language(language.as_str());
+            }
+
             if let Some(title) = self.title {
                 update = update.title(title.as_str());
             }
@@ -396,7 +404,7 @@ pub mod workshop {
     #[napi]
     pub fn get_subscribed_items() -> Vec<BigInt> {
         let client = crate::client::get_client();
-        let result = client.ugc().subscribed_items();
+        let result = client.ugc().subscribed_items(false);
 
         result
             .iter()
