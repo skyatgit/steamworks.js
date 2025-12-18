@@ -33,10 +33,8 @@ const target = targets[process.argv.at(-1)] || Object.values(targets).find(t => 
 
 const dist = path.join(__dirname, 'dist', target.folder)
 
-// 优先从 steamworks-rs 中的 SDK 复制，否则从本地 sdk 目录复制
-const steamworksRsSdk = path.join(__dirname, 'steamworks-rs/steamworks-sys/lib/steam/redistributable_bin', target.folder)
-const localSdk = path.join(__dirname, 'sdk/redistributable_bin', target.folder)
-const redist = fs.existsSync(steamworksRsSdk) ? steamworksRsSdk : localSdk
+// 从 steamworks-rs 子模块中获取 SDK 文件
+const redist = path.join(__dirname, 'steamworks-rs/steamworks-sys/lib/steam/redistributable_bin', target.folder)
 
 console.log('[build] SDK 路径:', redist)
 
